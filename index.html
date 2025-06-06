@@ -107,9 +107,9 @@
 <body>
   <h1>📅 Monthly UAF WTG Comd Calendar</h1>
   <div class="calendar-nav">
-    <button onclick="changeMonth(-1)" style="font-size: 1.8rem; font-weight: bold; color: white; border: none; background: none;">&#x25C0;</button>
+    <button id="prevBtn" style="font-size: 1.8rem; font-weight: bold; color: white; border: none; background: none;">&#x25C0;</button>
     <span id="monthTitle"></span>
-    <button onclick="changeMonth(1)" style="font-size: 1.8rem; font-weight: bold; color: white; border: none; background: none;">&#x25B6;</button>
+    <button id="nextBtn" style="font-size: 1.8rem; font-weight: bold; color: white; border: none; background: none;">&#x25B6;</button>
   </div>
   <div class="calendar" id="calendar"></div>
 
@@ -123,10 +123,10 @@
     <label>You Are?:
       <select id="personSelect"></select>
     </label><br>
-    <label>Swap From :
+    <label>Swap From (dd/mm/yyyy):
       <input type="date" id="fromDate">
     </label><br>
-    <label>Swap To :
+    <label>Swap To (dd/mm/yyyy):
       <input type="date" id="toDate">
     </label><br>
     <button class="button" onclick="confirmSwap()">Input Swap</button>
@@ -149,6 +149,21 @@
 
     let viewYear = new Date().getFullYear();
     let viewMonth = new Date().getMonth();
+
+    document.getElementById("prevBtn").addEventListener("click", () => changeMonth(-1));
+    document.getElementById("nextBtn").addEventListener("click", () => changeMonth(1));
+
+    function changeMonth(direction) {
+      viewMonth += direction;
+      if (viewMonth < 0) {
+        viewMonth = 11;
+        viewYear--;
+      } else if (viewMonth > 11) {
+        viewMonth = 0;
+        viewYear++;
+      }
+      renderCalendar(viewYear, viewMonth);
+    }
 
     people.forEach(p => {
       const opt = document.createElement('option');
@@ -197,20 +212,6 @@
       }
     }
 
-    function changeMonth(direction) {
-      viewMonth += direction;
-      if (viewMonth < 0) {
-        viewMonth = 11;
-        viewYear--;
-      } else if (viewMonth > 11) {
-        viewMonth = 0;
-        viewYear++;
-      }
-      renderCalendar(viewYear, viewMonth);
-    }
-
-    renderCalendar(viewYear, viewMonth);
-
     function confirmSwap() {
       const fromDate = document.getElementById('fromDate').value;
       const toDate = document.getElementById('toDate').value;
@@ -226,6 +227,11 @@
         alert('Please select both dates.');
         return;
       }
+
+      const fromDateObj = new Date(fromDate);
+      viewMonth = fromDateObj.getMonth();
+      viewYear = fromDateObj.getFullYear();
+      renderCalendar(viewYear, viewMonth);
 
       if (assignments[fromDate] !== person) {
         alert(`You are not assigned on ${fromDate}. Assigned person is ${assignments[fromDate]}.`);
@@ -252,6 +258,8 @@
     function closePopup() {
       document.getElementById('popup').style.display = 'none';
     }
+
+    renderCalendar(viewYear, viewMonth);
   </script>
 </body>
 </html>
