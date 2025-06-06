@@ -12,11 +12,34 @@
       padding: 2rem;
       text-align: center;
     }
+    .calendar-nav {
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+    }
+    .calendar-nav button {
+      background: none;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    #monthTitle {
+      font-size: 1.8rem;
+      font-weight: bold;
+      border: 1px solid #fff;
+      border-radius: 10px;
+      padding: 0.5rem 1rem;
+      background-color: #2d2d44;
+    }
     .calendar {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 0.5rem;
-      margin-top: 2rem;
+      margin-top: 1rem;
     }
     .day {
       background: #2d2d44;
@@ -83,6 +106,11 @@
 </head>
 <body>
   <h1>📅 Monthly UAF WTG Comd Calendar</h1>
+  <div class="calendar-nav">
+    <button onclick="changeMonth(-1)">&#8592;</button>
+    <span id="monthTitle"></span>
+    <button onclick="changeMonth(1)">&#8594;</button>
+  </div>
   <div class="calendar" id="calendar"></div>
 
   <div id="swapForm">
@@ -116,7 +144,11 @@
     const people = ['DC', '2IC', 'DSM', 'HD DCS'];
     const calendar = document.getElementById('calendar');
     const personSelect = document.getElementById('personSelect');
+    const monthTitle = document.getElementById('monthTitle');
     const assignments = {};
+
+    let viewYear = new Date().getFullYear();
+    let viewMonth = new Date().getMonth();
 
     people.forEach(p => {
       const opt = document.createElement('option');
@@ -125,39 +157,59 @@
       personSelect.appendChild(opt);
     });
 
-    const today = new Date();
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-    for (let i = 0; i < 30; i++) {
-      const date = new Date();
-      date.setDate(today.getDate() + i);
-      const dateStr = date.toISOString().split('T')[0];
-      const dayOfWeek = date.getDay();
+    function renderCalendar(year, month) {
+      calendar.innerHTML = '';
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      monthTitle.textContent = `${months[month]} ${year}`;
 
-      const dayBox = document.createElement('div');
-      dayBox.className = 'day';
-      dayBox.setAttribute('data-date', dateStr);
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const date = new Date(year, month, day);
+        const dateStr = date.toISOString().split('T')[0];
+        const dayOfWeek = date.getDay();
 
-      const dayName = days[dayOfWeek];
-      const dayDate = `${dayName} ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
-      const title = document.createElement('h4');
-      title.textContent = dayDate;
-      dayBox.appendChild(title);
+        const dayBox = document.createElement('div');
+        dayBox.className = 'day';
+        dayBox.setAttribute('data-date', dateStr);
 
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        dayBox.classList.add('weekend');
-      } else {
-        const assigned = people[i % people.length];
-        assignments[dateStr] = assigned;
-        const assignedText = document.createElement('p');
-        assignedText.textContent = assigned;
-        assignedText.className = 'assigned';
-        dayBox.appendChild(assignedText);
+        const dayName = days[dayOfWeek];
+        const dayDate = `${dayName} ${day} ${months[month]} ${year}`;
+        const title = document.createElement('h4');
+        title.textContent = dayDate;
+        dayBox.appendChild(title);
+
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
+          dayBox.classList.add('weekend');
+        } else {
+          const index = (year * 100 + month * 100 + day) % people.length;
+          const assigned = people[index];
+          assignments[dateStr] = assigned;
+          const assignedText = document.createElement('p');
+          assignedText.textContent = assigned;
+          assignedText.className = 'assigned';
+          dayBox.appendChild(assignedText);
+        }
+
+        calendar.appendChild(dayBox);
       }
-
-      calendar.appendChild(dayBox);
     }
+
+    function changeMonth(direction) {
+      viewMonth += direction;
+      if (viewMonth < 0) {
+        viewMonth = 11;
+        viewYear--;
+      } else if (viewMonth > 11) {
+        viewMonth = 0;
+        viewYear++;
+      }
+      renderCalendar(viewYear, viewMonth);
+    }
+
+    renderCalendar(viewYear, viewMonth);
 
     function confirmSwap() {
       const fromDate = document.getElementById('fromDate').value;
@@ -192,13 +244,7 @@
         assignments[from] = assignments[to];
         assignments[to] = temp;
 
-        document.querySelectorAll('.day').forEach(day => {
-          const d = day.getAttribute('data-date');
-          if (assignments[d]) {
-            const assignedElem = day.querySelector('.assigned');
-            if (assignedElem) assignedElem.textContent = assignments[d];
-          }
-        });
+        renderCalendar(viewYear, viewMonth);
       }
       closePopup();
     }
@@ -209,3 +255,4 @@
   </script>
 </body>
 </html>
+
