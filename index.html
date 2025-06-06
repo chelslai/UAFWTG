@@ -107,9 +107,9 @@
 <body>
   <h1>📅 Monthly UAF WTG Comd Calendar</h1>
   <div class="calendar-nav">
-    <button onclick="changeMonth(-1)">&#8592;</button>
+    <button onclick="changeMonth(-1)" style="font-size: 1.8rem; font-weight: bold; color: white; border: none; background: none;">&#x25C0;</button>
     <span id="monthTitle"></span>
-    <button onclick="changeMonth(1)">&#8594;</button>
+    <button onclick="changeMonth(1)" style="font-size: 1.8rem; font-weight: bold; color: white; border: none; background: none;">&#x25B6;</button>
   </div>
   <div class="calendar" id="calendar"></div>
 
@@ -186,7 +186,7 @@
         } else {
           const index = (year * 100 + month * 100 + day) % people.length;
           const assigned = people[index];
-          assignments[dateStr] = assigned;
+          if (!assignments[dateStr]) assignments[dateStr] = assigned;
           const assignedText = document.createElement('p');
           assignedText.textContent = assigned;
           assignedText.className = 'assigned';
@@ -255,4 +255,3 @@
   </script>
 </body>
 </html>
-
