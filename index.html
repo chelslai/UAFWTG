@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monthly UAF WTG Comd Calendar</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #1e1e2f;
+      color: #fff;
+      padding: 1rem;
+      text-align: center;
+    }
+    .calendar-nav {
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .calendar-nav button {
+      background: none;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    #monthTitle {
+      font-size: 1.5rem;
+      font-weight: bold;
+      border: 1px solid #fff;
+      border-radius: 10px;
+      padding: 0.5rem 1rem;
+      background-color: #2d2d44;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.3rem;
+      margin-top: 1rem;
+    }
+    .day {
+      background: #2d2d44;
+      padding: 0.5rem;
+      border-radius: 10px;
+      min-height: 80px;
+    }
+    .day.weekend {
+      background: #555;
+      color: #ccc;
+    }
+    .day h4 {
+      margin: 0 0 0.3rem;
+      font-size: 0.8rem;
+    }
+    .assigned {
+      font-weight: bold;
+      background: #ffffff;
+      color: #1e1e2f;
+      border-radius: 8px;
+      padding: 0.3rem;
+      width: fit-content;
+      margin: 0 auto;
+      font-size: 0.8rem;
+    }
+    #swapForm {
+      margin-top: 2rem;
+      background: #2d2d44;
+      padding: 1rem;
+      border-radius: 10px;
+      max-width: 100%;
+    }
+    #swapForm select, #swapForm input {
+      margin: 0.5rem auto;
+      padding: 0.5rem;
+      border-radius: 5px;
+      border: none;
+      display: block;
+      width: 100%;
+      max-width: 300px;
+    }
+    #popup {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    #popupContent {
+      background: #2d2d44;
+      padding: 2rem;
+      border-radius: 10px;
+      z-index: 1001;
+      width: 90%;
+      max-width: 400px;
+    }
+    .button {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 5px;
+      margin: 0.5rem;
+      background: #4caf50;
+      color: white;
+      cursor: pointer;
+    }
+    @media (max-width: 600px) {
+      .calendar {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .calendar-nav {
+        flex-direction: column;
+      }
+      #monthTitle {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<!-- HTML remains unchanged -->
+</body>
+</html>
