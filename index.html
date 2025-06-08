@@ -83,15 +83,16 @@
       top: 0; left: 0;
       width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.7);
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
-      display: none;
+      z-index: 1000;
     }
     #popupContent {
       background: #2d2d44;
       padding: 2rem;
       border-radius: 10px;
+      z-index: 1001;
     }
     .button {
       padding: 0.5rem 1rem;
@@ -107,12 +108,11 @@
 <body>
   <h1>📅 Monthly UAF WTG Comd Calendar</h1>
   <div class="calendar-nav">
-    <button id="prevBtn" style="font-size: 1.8rem; font-weight: bold; color: white; border: none; background: none;">&#x25C0;</button>
+    <button id="prevBtn">◀</button>
     <span id="monthTitle"></span>
-    <button id="nextBtn" style="font-size: 1.8rem; font-weight: bold; color: white; border: none; background: none;">&#x25B6;</button>
+    <button id="nextBtn">▶</button>
   </div>
   <div class="calendar" id="calendar"></div>
-
   <div id="swapForm">
     <h2>REQUEST SWAP</h2>
     <label>
@@ -129,137 +129,153 @@
     <label>Swap To (dd/mm/yyyy):
       <input type="date" id="toDate">
     </label><br>
-    <button class="button" onclick="confirmSwap()">Input Swap</button>
+    <button class="button" id="inputSwapBtn">Input Swap</button>
   </div>
 
   <div id="popup">
     <div id="popupContent">
       <p>Are you sure?</p>
-      <button class="button" onclick="applySwap()">Yes</button>
-      <button class="button" onclick="closePopup()" style="background:#f44336">No</button>
+      <button class="button" id="yesBtn">Yes</button>
+      <button class="button" id="noBtn" style="background:#f44336">No</button>
     </div>
   </div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const people = ["DC", "2IC", "DSM", "HD DCS"];
+  let assignments = {};
+  let currentMonth = new Date().getMonth();
+  let currentYear = new Date().getFullYear();
+  let swapRequest = {};
 
-  <script>
-    const people = ['DC', '2IC', 'DSM', 'HD DCS'];
-    const calendar = document.getElementById('calendar');
-    const personSelect = document.getElementById('personSelect');
-    const monthTitle = document.getElementById('monthTitle');
-    const assignments = {};
+  function getLocalDateString(date) {
+    return new Date(date).toLocaleDateString('en-CA'); // yyyy-mm-dd
+  }
 
-    let viewYear = new Date().getFullYear();
-    let viewMonth = new Date().getMonth();
-
-    document.getElementById("prevBtn").addEventListener("click", () => changeMonth(-1));
-    document.getElementById("nextBtn").addEventListener("click", () => changeMonth(1));
-
-    function changeMonth(direction) {
-      viewMonth += direction;
-      if (viewMonth < 0) {
-        viewMonth = 11;
-        viewYear--;
-      } else if (viewMonth > 11) {
-        viewMonth = 0;
-        viewYear++;
+  function preloadAssignments(year, month) {
+    const date = new Date(year, month, 1);
+    let personIndex = 0;
+    assignments = {};
+    while (date.getMonth() === month) {
+      const day = date.getDay();
+      const dateStr = getLocalDateString(date);
+      if (day !== 0 && day !== 6) {
+        assignments[dateStr] = people[personIndex % people.length];
+        personIndex++;
       }
-      renderCalendar(viewYear, viewMonth);
+      date.setDate(date.getDate() + 1);
+    }
+  }
+
+  function renderCalendar(month, year) {
+    const calendar = document.getElementById("calendar");
+    calendar.innerHTML = "";
+    const monthTitle = document.getElementById("monthTitle");
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    monthTitle.textContent = `Month: ${monthNames[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for (let i = 0; i < firstDay; i++) {
+      const emptyCell = document.createElement("div");
+      calendar.appendChild(emptyCell);
     }
 
-    people.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p;
-      opt.textContent = p;
-      personSelect.appendChild(opt);
+    for (let date = 1; date <= daysInMonth; date++) {
+      const dayDiv = document.createElement("div");
+      const thisDate = new Date(year, month, date);
+      const dateStr = getLocalDateString(thisDate);
+      dayDiv.classList.add("day");
+      if (thisDate.getDay() === 0 || thisDate.getDay() === 6) {
+        dayDiv.classList.add("weekend");
+      }
+      const dateLabel = document.createElement("h4");
+      dateLabel.textContent = `${thisDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' })}`;
+      dayDiv.appendChild(dateLabel);
+      if (assignments[dateStr]) {
+        const assigned = document.createElement("div");
+        assigned.classList.add("assigned");
+        assigned.textContent = assignments[dateStr];
+        dayDiv.appendChild(assigned);
+      }
+      calendar.appendChild(dayDiv);
+    }
+  }
+
+  function changeMonth(offset) {
+    currentMonth += offset;
+    if (currentMonth < 0) {
+      currentMonth = 11;
+      currentYear--;
+    } else if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear++;
+    }
+    preloadAssignments(currentYear, currentMonth);
+    renderCalendar(currentMonth, currentYear);
+    populatePersonSelect();
+  }
+
+  function populatePersonSelect() {
+    const select = document.getElementById("personSelect");
+    select.innerHTML = "";
+    people.forEach(person => {
+      const option = document.createElement("option");
+      option.value = person;
+      option.textContent = person;
+      select.appendChild(option);
     });
+  }
 
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  function confirmSwap() {
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+    const acknowledged = document.getElementById('acknowledgeBox').checked;
+    const person = document.getElementById('personSelect').value;
 
-    function renderCalendar(year, month) {
-      calendar.innerHTML = '';
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-      monthTitle.textContent = `${months[month]} ${year}`;
+    const fromStr = getLocalDateString(fromDate);
+    const toStr = getLocalDateString(toDate);
 
-      for (let day = 1; day <= lastDay.getDate(); day++) {
-        const date = new Date(year, month, day);
-        const dateStr = date.toISOString().split('T')[0];
-        const dayOfWeek = date.getDay();
-
-        const dayBox = document.createElement('div');
-        dayBox.className = 'day';
-        dayBox.setAttribute('data-date', dateStr);
-
-        const dayName = days[dayOfWeek];
-        const dayDate = `${dayName} ${day} ${months[month]} ${year}`;
-        const title = document.createElement('h4');
-        title.textContent = dayDate;
-        dayBox.appendChild(title);
-
-        if (dayOfWeek === 0 || dayOfWeek === 6) {
-          dayBox.classList.add('weekend');
-        } else {
-          const index = (year * 100 + month * 100 + day) % people.length;
-          const assigned = people[index];
-          if (!assignments[dateStr]) assignments[dateStr] = assigned;
-          const assignedText = document.createElement('p');
-          assignedText.textContent = assigned;
-          assignedText.className = 'assigned';
-          dayBox.appendChild(assignedText);
-        }
-
-        calendar.appendChild(dayBox);
-      }
+    if (!acknowledged) {
+      alert('Please confirm you have informed the person you are swapping with.');
+      return;
     }
-
-    function confirmSwap() {
-      const fromDate = document.getElementById('fromDate').value;
-      const toDate = document.getElementById('toDate').value;
-      const acknowledged = document.getElementById('acknowledgeBox').checked;
-      const person = document.getElementById('personSelect').value;
-
-      if (!acknowledged) {
-        alert('Please confirm you have informed the person you are swapping with.');
-        return;
-      }
-
-      if (!fromDate || !toDate) {
-        alert('Please select both dates.');
-        return;
-      }
-
-      const fromDateObj = new Date(fromDate);
-      viewMonth = fromDateObj.getMonth();
-      viewYear = fromDateObj.getFullYear();
-      renderCalendar(viewYear, viewMonth);
-
-      if (assignments[fromDate] !== person) {
-        alert(`You are not assigned on ${fromDate}. Assigned person is ${assignments[fromDate]}.`);
-        return;
-      }
-
-      document.getElementById('popup').style.display = 'flex';
+    if (!fromStr || !toStr) {
+      alert('Please select both dates.');
+      return;
     }
-
-    function applySwap() {
-      const from = document.getElementById('fromDate').value;
-      const to = document.getElementById('toDate').value;
-
-      if (assignments[from] && assignments[to]) {
-        const temp = assignments[from];
-        assignments[from] = assignments[to];
-        assignments[to] = temp;
-
-        renderCalendar(viewYear, viewMonth);
-      }
-      closePopup();
+    if (assignments[fromStr] !== person) {
+      alert('You are not assigned to the from-date.');
+      return;
     }
+    swapRequest = { from: fromStr, to: toStr };
+    document.getElementById('popup').style.display = 'flex';
+  }
 
-    function closePopup() {
-      document.getElementById('popup').style.display = 'none';
-    }
+  function applySwap() {
+    const from = swapRequest.from;
+    const to = swapRequest.to;
+    const temp = assignments[to];
+    assignments[to] = assignments[from];
+    assignments[from] = temp;
+    renderCalendar(currentMonth, currentYear);
+    document.getElementById('popup').style.display = 'none';
+  }
 
-    renderCalendar(viewYear, viewMonth);
-  </script>
+  function closePopup() {
+    document.getElementById('popup').style.display = 'none';
+  }
+
+  document.getElementById("prevBtn").addEventListener("click", () => changeMonth(-1));
+  document.getElementById("nextBtn").addEventListener("click", () => changeMonth(1));
+  document.getElementById("inputSwapBtn").addEventListener("click", confirmSwap);
+  document.getElementById("yesBtn").addEventListener("click", applySwap);
+  document.getElementById("noBtn").addEventListener("click", closePopup);
+
+  preloadAssignments(currentYear, currentMonth);
+  renderCalendar(currentMonth, currentYear);
+  populatePersonSelect();
+});
+</script>
 </body>
 </html>
