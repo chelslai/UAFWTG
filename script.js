@@ -5,6 +5,8 @@ document.addEventListener("DOMContentLoaded", function () {
   let currentYear = new Date().getFullYear();
   let swapRequest = {};
   let swapHistory = [];
+  const swapLogSheetURL = "https://docs.google.com/spreadsheets/d/1NHGS1wRK5EnAFk7H2pgtYcRo-lHrV4EdINJUkA8kn7Q/edit#gid=0";
+  const swapDataURL = "https://opensheet.elk.sh/1NHGS1wRK5EnAFk7H2pgtYcRo-lHrV4EdINJUkA8kn7Q/Sheet1"; // JSON format via opensheet
 
   function getLocalDateString(date) {
     return new Date(date).toLocaleDateString('en-CA');
@@ -17,12 +19,32 @@ document.addEventListener("DOMContentLoaded", function () {
     while (date.getMonth() === month) {
       const day = date.getDay();
       const dateStr = getLocalDateString(date);
-      if (day !== 0 && day !== 6 && !assignments[dateStr]) {
+      if (day !== 0 && day !== 6) {
         assignments[dateStr] = people[personIndex % people.length];
         personIndex++;
       }
       date.setDate(date.getDate() + 1);
     }
+  }
+
+  function applySavedSwapsAndRender() {
+    preloadAssignments(currentYear, currentMonth);
+    fetch(swapDataURL)
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(row => {
+          if (row.from_date && row.to_date && row.person && row.swapped_with) {
+            const temp = assignments[row.to_date];
+            assignments[row.to_date] = assignments[row.from_date];
+            assignments[row.from_date] = temp;
+          }
+        });
+        renderCalendar(currentMonth, currentYear);
+      })
+      .catch(err => {
+        console.error("Failed to load saved swaps:", err);
+        renderCalendar(currentMonth, currentYear);
+      });
   }
 
   function renderCalendar(month, year) {
@@ -70,8 +92,7 @@ document.addEventListener("DOMContentLoaded", function () {
       currentMonth = 0;
       currentYear++;
     }
-    preloadAssignments(currentYear, currentMonth);
-    renderCalendar(currentMonth, currentYear);
+    applySavedSwapsAndRender();
     populatePersonSelect();
   }
 
@@ -117,34 +138,42 @@ document.addEventListener("DOMContentLoaded", function () {
 
     swapHistory.push(`"${new Date().toLocaleString()}","${person}","${from}","${to}","${swappedWith}"`);
 
-    const formData = new URLSearchParams();
-    formData.append("entry.869958100", person);
-    formData.append("entry.670565463", from);
-    formData.append("entry.100956069", to);
-    formData.append("entry.261956296", swappedWith);
-
     fetch("https://docs.google.com/forms/d/e/1FAIpQLSd_UR-lWyEWURdEZ5GOje9j6ePhNSKY6iQNsvcG1yQnFp1BIw/formResponse", {
       method: "POST",
+      body: new URLSearchParams({
+        "entry.869958100": person,
+        "entry.670565463": from,
+        "entry.100956069": to,
+        "entry.261956296": swappedWith
+      }),
       mode: "no-cors",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: formData
+      }
     }).then(() => {
-      const temp = assignments[to];
-      assignments[to] = assignments[from];
-      assignments[from] = temp;
-      localStorage.setItem("assignments", JSON.stringify(assignments));
+      assignments[to] = person;
+      assignments[from] = swappedWith;
       renderCalendar(currentMonth, currentYear);
       document.getElementById('popup').style.display = 'none';
     }).catch(err => {
-      console.error("❌ Failed to submit form:", err);
+      console.error("Failed to submit form:", err);
       alert("Something went wrong while saving the swap.");
     });
   }
 
   function closePopup() {
     document.getElementById('popup').style.display = 'none';
+  }
+
+  function downloadLog() {
+    let csv = "timestamp,person,from_date,to_date,swapped_with\n" + swapHistory.join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "swap_log.csv";
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   document.getElementById("prevBtn")?.addEventListener("click", () => changeMonth(-1));
@@ -154,12 +183,6 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("noBtn")?.addEventListener("click", closePopup);
   document.getElementById("downloadLogBtn")?.addEventListener("click", downloadLog);
 
-  const stored = localStorage.getItem("assignments");
-  if (stored) {
-    assignments = JSON.parse(stored);
-  } else {
-    preloadAssignments(currentYear, currentMonth);
-  }
-  renderCalendar(currentMonth, currentYear);
+  applySavedSwapsAndRender();
   populatePersonSelect();
 });
