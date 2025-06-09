@@ -1,4 +1,3 @@
-<script>
 document.addEventListener("DOMContentLoaded", function () {
   const people = ["DC", "2IC", "DSM", "HD DCS"];
   let assignments = {};
@@ -175,4 +174,3 @@ document.addEventListener("DOMContentLoaded", function () {
   renderCalendar(currentMonth, currentYear);
   populatePersonSelect();
 });
-</script>
