@@ -10,30 +10,20 @@ document.addEventListener("DOMContentLoaded", function () {
     return new Date(date).toLocaleDateString('en-CA');
   }
 
-function preloadAssignments(year, month) {
-  const date = new Date(year, month, 1);
-  let personIndex = 0;
-
-  // Keep existing assignments from localStorage
-  const stored = localStorage.getItem("assignments");
-  if (stored) {
-    assignments = JSON.parse(stored);
-  } else {
+  function preloadAssignments(year, month) {
+    const date = new Date(year, month, 1);
+    let personIndex = 0;
     assignments = {};
-  }
-
-  while (date.getMonth() === month) {
-    const day = date.getDay();
-    const dateStr = getLocalDateString(date);
-    if (day !== 0 && day !== 6 && !assignments[dateStr]) {
-      assignments[dateStr] = people[personIndex % people.length];
-      personIndex++;
+    while (date.getMonth() === month) {
+      const day = date.getDay();
+      const dateStr = getLocalDateString(date);
+      if (day !== 0 && day !== 6 && !assignments[dateStr]) {
+        assignments[dateStr] = people[personIndex % people.length];
+        personIndex++;
+      }
+      date.setDate(date.getDate() + 1);
     }
-    date.setDate(date.getDate() + 1);
   }
-
-  localStorage.setItem("assignments", JSON.stringify(assignments));
-}
 
   function renderCalendar(month, year) {
     const calendar = document.getElementById("calendar");
