@@ -1,11 +1,12 @@
+// 💍 Cleaned + Working script.js with Swap Functionality & Google Sheets
+
 const people = ["DC", "2IC", "DSM", "HD DCS"];
 let assignments = {};
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 let swapRequest = {};
 let swapHistory = [];
-
-const webhookURL = "hhttps://script.google.com/macros/s/AKfycbyOENcSCww3ff1T_CO7quESghZmu_NzyOF1PYCchrBSN57ACNmew4eLJumf1U4zt9fe/exec";
+const webhookURL = "https://script.google.com/macros/s/PASTE_YOUR_SCRIPT_ID_HERE/exec";
 
 function getLocalDateString(date) {
   return new Date(date).toLocaleDateString('en-CA');
@@ -119,15 +120,23 @@ function confirmSwap() {
     alert(`You are not assigned on ${fromStr}. Assigned person is ${assignments[fromStr] || 'none'}`);
     return;
   }
+
   swapRequest = { from: fromStr, to: toStr, person };
   document.getElementById('popup').style.display = 'flex';
 }
 
 function applySwap() {
+  console.log("✅ YES button clicked. swapRequest =", swapRequest);
+
+  if (!swapRequest?.from || !swapRequest?.to || !swapRequest?.person) {
+    alert("Something went wrong — please try the swap again.");
+    return;
+  }
+
   const { from, to, person } = swapRequest;
   const swappedWith = assignments[to];
 
-  swapHistory.push(`\"${new Date().toLocaleString()}\",\"${person}\",\"${from}\",\"${to}\",\"${swappedWith}\"`);
+  swapHistory.push(`"${new Date().toLocaleString()}","${person}","${from}","${to}","${swappedWith}"`);
 
   fetch(webhookURL, {
     method: "POST",
