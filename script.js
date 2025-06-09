@@ -147,17 +147,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('popup').style.display = 'none';
   }
 
-  function downloadLog() {
-    let csv = "timestamp,person,from_date,to_date,swapped_with\n" + swapHistory.join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "swap_log.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   document.getElementById("prevBtn")?.addEventListener("click", () => changeMonth(-1));
   document.getElementById("nextBtn")?.addEventListener("click", () => changeMonth(1));
   document.getElementById("inputSwapBtn")?.addEventListener("click", confirmSwap);
