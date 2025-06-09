@@ -143,23 +143,35 @@ function applySwap() {
   formData.append("entry.100956069", to);           // to
   formData.append("entry.261956296", swappedWith);  // swappedWith
 
-  fetch("https://docs.google.com/forms/d/e/1FAIpQLSd_UR-lWyEWURdEZ5GOje9j6ePhNSKY6iQNsvcG1yQnFp1BIw/formResponse", {
-    method: "POST",
-    mode: "no-cors",
-    body: formData
-  }).then(() => {
-    console.log("Form submitted to Google Form!");
-    const temp = assignments[to];
-    assignments[to] = assignments[from];
-    assignments[from] = temp;
+fetch("https://docs.google.com/forms/d/e/1FAIpQLSd_UR-lWyEWURdEZ5GOje9j6ePhNSKY6iQNsvcG1yQnFp1BIw/formResponse", {
+  method: "POST",
+  body: new URLSearchParams({
+    "entry.869958100": person,
+    "entry.670565463": from,
+    "entry.100956069": to,
+    "entry.261956296": swappedWith
+  }),
+  mode: "no-cors",
+  headers: {
+    "Content-Type": "application/x-www-form-urlencoded"
+  }
+})
+.then(() => {
+  console.log("✅ Form submitted to Google Form!");
+  
+  // Do the local calendar swap here
+  const temp = assignments[to];
+  assignments[to] = assignments[from];
+  assignments[from] = temp;
 
-    renderCalendar(currentMonth, currentYear);
-    document.getElementById('popup').style.display = 'none';
-  }).catch(err => {
-    console.error("Failed to submit form:", err);
-    alert("Something went wrong while saving the swap.");
-  });
-}
+  renderCalendar(currentMonth, currentYear);
+  document.getElementById('popup').style.display = 'none';
+})
+.catch(err => {
+  console.error("❌ Failed to submit form:", err);
+  alert("Something went wrong while saving the swap.");
+});
+
 
 
 function closePopup() {
