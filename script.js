@@ -11,19 +11,14 @@ document.addEventListener("DOMContentLoaded", function () {
     return new Date(date).toLocaleDateString('en-CA');
   }
 
-  function saveSwapsToStorage() {
-    localStorage.setItem("swapAssignments", JSON.stringify(assignments));
+  function saveAssignments() {
+    localStorage.setItem("assignments", JSON.stringify(assignments));
   }
 
-  function loadSwapsFromStorage() {
-    const saved = localStorage.getItem("swapAssignments");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        assignments = parsed;
-      } catch (e) {
-        console.error("Failed to parse saved swaps:", e);
-      }
+  function loadAssignments() {
+    const stored = localStorage.getItem("assignments");
+    if (stored) {
+      assignments = JSON.parse(stored);
     }
   }
 
@@ -94,7 +89,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function populatePersonSelect() {
     const select = document.getElementById("personSelect");
-    if (!select) return;
     select.innerHTML = "";
     people.forEach(person => {
       const option = document.createElement("option");
@@ -110,8 +104,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const acknowledged = document.getElementById('acknowledgeBox')?.checked;
     const person = document.getElementById('personSelect')?.value;
 
-    const fromStr = getLocalDateString(fromDate);
-    const toStr = getLocalDateString(toDate);
+    const fromStr = fromDate;
+    const toStr = toDate;
 
     if (!acknowledged) {
       alert('Please confirm you have informed the person you are swapping with.');
@@ -126,8 +120,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
     swapRequest = { from: fromStr, to: toStr, person };
-    const popup = document.getElementById('popup');
-    if (popup) popup.style.display = 'flex';
+    document.getElementById('popup').style.display = 'flex';
   }
 
   function applySwap() {
@@ -140,20 +133,18 @@ document.addEventListener("DOMContentLoaded", function () {
     assignments[to] = assignments[from];
     assignments[from] = temp;
 
-    saveSwapsToStorage();
+    saveAssignments();  // Save updated swaps
+
     renderCalendar(currentMonth, currentYear);
-    const popup = document.getElementById('popup');
-    if (popup) popup.style.display = 'none';
+    document.getElementById('popup').style.display = 'none';
   }
 
   function closePopup() {
-    const popup = document.getElementById('popup');
-    if (popup) popup.style.display = 'none';
+    document.getElementById('popup').style.display = 'none';
   }
 
   function downloadLog() {
-    let csv = "timestamp,person,from_date,to_date,swapped_with
-" + swapHistory.join("\n");
+    let csv = "timestamp,person,from_date,to_date,swapped_with\n" + swapHistory.join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -163,14 +154,14 @@ document.addEventListener("DOMContentLoaded", function () {
     URL.revokeObjectURL(url);
   }
 
-  document.getElementById("prevBtn")?.addEventListener("click", () => changeMonth(-1));
-  document.getElementById("nextBtn")?.addEventListener("click", () => changeMonth(1));
-  document.getElementById("inputSwapBtn")?.addEventListener("click", confirmSwap);
-  document.getElementById("yesBtn")?.addEventListener("click", applySwap);
-  document.getElementById("noBtn")?.addEventListener("click", closePopup);
-  document.getElementById("downloadLogBtn")?.addEventListener("click", downloadLog);
+  document.getElementById("prevBtn").addEventListener("click", () => changeMonth(-1));
+  document.getElementById("nextBtn").addEventListener("click", () => changeMonth(1));
+  document.getElementById("inputSwapBtn").addEventListener("click", confirmSwap);
+  document.getElementById("yesBtn").addEventListener("click", applySwap);
+  document.getElementById("noBtn").addEventListener("click", closePopup);
+  document.getElementById("downloadLogBtn").addEventListener("click", downloadLog);
 
-  loadSwapsFromStorage();
+  loadAssignments();
   preloadAssignments(currentYear, currentMonth);
   renderCalendar(currentMonth, currentYear);
   populatePersonSelect();
