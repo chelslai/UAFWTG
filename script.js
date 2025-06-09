@@ -1,4 +1,4 @@
-// ✅ script.js for UAF WTG Calendar
+// ✅ Final script.js — with Google Sheets sync
 
 const people = ["DC", "2IC", "DSM", "HD DCS"];
 let assignments = {};
@@ -6,7 +6,7 @@ let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 let swapRequest = {};
 let swapHistory = [];
-const webhookURL = "https://script.google.com/macros/s/AKfycbyOENcSCww3ff1T_CO7quESghZmu_NzyOF1PYCchrBSN57ACNmew4eLJumf1U4zt9fe/exec";
+const webhookURL = "https://script.google.com/macros/s/AKfycby7FfkRS4yXNP41_HnbvyNzBZzVej2OCorpxrgep-dOTnPhS3dPJc-kl_EOte47r3x3/exec";
 
 function getLocalDateString(date) {
   return new Date(date).toLocaleDateString('en-CA');
@@ -17,9 +17,10 @@ async function loadAssignments() {
     const res = await fetch(webhookURL);
     const data = await res.json();
     assignments = data;
+    console.log("Loaded from Google Sheet:", assignments);
   } catch (err) {
-    console.error("Failed to load assignments", err);
-    preloadAssignments(currentYear, currentMonth); // fallback if load fails
+    console.error("Failed to load from Google Sheets", err);
+    preloadAssignments(currentYear, currentMonth); // fallback
   }
 }
 
@@ -116,7 +117,7 @@ function confirmSwap() {
     return;
   }
   if (assignments[fromStr] !== person) {
-    alert('You are not assigned to the from-date.');
+    alert(`You are not assigned on ${fromStr}. Assigned person is ${assignments[fromStr] || 'none'}`);
     return;
   }
   swapRequest = { from: fromStr, to: toStr, person };
@@ -129,20 +130,22 @@ function applySwap() {
 
   swapHistory.push(`"${new Date().toLocaleString()}","${person}","${from}","${to}","${swappedWith}"`);
 
-  // Save to Google Sheet
   fetch(webhookURL, {
     method: "POST",
     body: JSON.stringify({ person, from, to, swappedWith }),
     headers: { "Content-Type": "application/json" }
-  }).then(res => res.text()).then(console.log).catch(console.error);
-
-  // Swap locally
-  const temp = assignments[to];
-  assignments[to] = assignments[from];
-  assignments[from] = temp;
-
-  renderCalendar(currentMonth, currentYear);
-  document.getElementById('popup').style.display = 'none';
+  })
+    .then(res => res.text())
+    .then(response => {
+      console.log("POST response:", response);
+      // Swap locally
+      const temp = assignments[to];
+      assignments[to] = assignments[from];
+      assignments[from] = temp;
+      renderCalendar(currentMonth, currentYear);
+      document.getElementById('popup').style.display = 'none';
+    })
+    .catch(console.error);
 }
 
 function closePopup() {
