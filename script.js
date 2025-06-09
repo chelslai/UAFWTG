@@ -1,5 +1,3 @@
-// script.js
-
 const people = ["DC", "2IC", "DSM", "HD DCS"];
 let assignments = {};
 let currentMonth = new Date().getMonth();
@@ -7,10 +5,10 @@ let currentYear = new Date().getFullYear();
 let swapRequest = {};
 let swapHistory = [];
 
-const sheetURL = "https://opensheet.elk.sh/1-lYbDZ-LDdUTJxi8GQx0D9rAoVQMWulKfDknq9vfv6o/Form%20Responses%201";
+const formURL = "https://docs.google.com/forms/d/e/1FAIpQLSd_UR-lWyEWURdEZ5GOje9j6ePhNSKY6iQNsvcG1yQnFp1BIw/formResponse";
 
 function getLocalDateString(date) {
-  return new Date(date).toLocaleDateString("en-CA");
+  return new Date(date).toLocaleDateString('en-CA');
 }
 
 function preloadAssignments(year, month) {
@@ -28,48 +26,15 @@ function preloadAssignments(year, month) {
   }
 }
 
-function applySavedSwapsFromSheet(callback) {
-  fetch(sheetURL)
-    .then((response) => response.json())
-    .then((data) => {
-      data.forEach((entry) => {
-        const from = entry["Swap From"];
-        const to = entry["Swap To"];
-        const person = entry["You Are?"];
-        const swappedWith = entry["Swapped With"];
-        if (assignments[from] === person && assignments[to] === swappedWith) {
-          const temp = assignments[to];
-          assignments[to] = assignments[from];
-          assignments[from] = temp;
-        }
-      });
-      if (callback) callback();
-    })
-    .catch((error) => {
-      console.error("Error fetching swap data:", error);
-      if (callback) callback();
-    });
-}
-
 function renderCalendar(month, year) {
   const calendar = document.getElementById("calendar");
+  if (!calendar) return;
   calendar.innerHTML = "";
   const monthTitle = document.getElementById("monthTitle");
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-  monthTitle.textContent = `Month: ${monthNames[month]} ${year}`;
+  if (monthTitle) {
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    monthTitle.textContent = `Month: ${monthNames[month]} ${year}`;
+  }
 
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -88,11 +53,7 @@ function renderCalendar(month, year) {
       dayDiv.classList.add("weekend");
     }
     const dateLabel = document.createElement("h4");
-    dateLabel.textContent = `${thisDate.toLocaleDateString("en-GB", {
-      weekday: "short",
-      day: "2-digit",
-      month: "short",
-    })}`;
+    dateLabel.textContent = `${thisDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' })}`;
     dayDiv.appendChild(dateLabel);
     if (assignments[dateStr]) {
       const assigned = document.createElement("div");
@@ -102,6 +63,25 @@ function renderCalendar(month, year) {
     }
     calendar.appendChild(dayDiv);
   }
+}
+
+function loadSwapsFromSheet(callback) {
+  fetch("https://opensheet.elk.sh/1AYzYv4YGCulxHE8aKHZYqKchpLQ0rLdd9nS_VZlP7_w/Sheet1")
+    .then(res => res.json())
+    .then(data => {
+      data.forEach(row => {
+        if (row.person && row.from_date && row.to_date) {
+          const temp = assignments[row.to_date];
+          assignments[row.to_date] = assignments[row.from_date];
+          assignments[row.from_date] = temp;
+        }
+      });
+      if (callback) callback();
+    })
+    .catch(err => {
+      console.error("Failed to load swaps from sheet:", err);
+      if (callback) callback();
+    });
 }
 
 function changeMonth(offset) {
@@ -114,16 +94,17 @@ function changeMonth(offset) {
     currentYear++;
   }
   preloadAssignments(currentYear, currentMonth);
-  applySavedSwapsFromSheet(() => {
+  loadSwapsFromSheet(() => {
     renderCalendar(currentMonth, currentYear);
-    populatePersonSelect();
   });
+  populatePersonSelect();
 }
 
 function populatePersonSelect() {
   const select = document.getElementById("personSelect");
+  if (!select) return;
   select.innerHTML = "";
-  people.forEach((person) => {
+  people.forEach(person => {
     const option = document.createElement("option");
     option.value = person;
     option.textContent = person;
@@ -132,64 +113,65 @@ function populatePersonSelect() {
 }
 
 function confirmSwap() {
-  const fromDate = document.getElementById("fromDate").value;
-  const toDate = document.getElementById("toDate").value;
-  const acknowledged = document.getElementById("acknowledgeBox").checked;
-  const person = document.getElementById("personSelect").value;
+  const fromDate = document.getElementById('fromDate')?.value;
+  const toDate = document.getElementById('toDate')?.value;
+  const acknowledged = document.getElementById('acknowledgeBox')?.checked;
+  const person = document.getElementById('personSelect')?.value;
 
   const fromStr = getLocalDateString(fromDate);
   const toStr = getLocalDateString(toDate);
 
   if (!acknowledged) {
-    alert("Please confirm you have informed the person you are swapping with.");
+    alert('Please confirm you have informed the person you are swapping with.');
     return;
   }
   if (!fromStr || !toStr) {
-    alert("Please select both dates.");
+    alert('Please select both dates.');
     return;
   }
   if (assignments[fromStr] !== person) {
-    alert("You are not assigned to the from-date.");
+    alert('You are not assigned to the from-date.');
     return;
   }
   swapRequest = { from: fromStr, to: toStr, person };
-  document.getElementById("popup").style.display = "flex";
+  const popup = document.getElementById('popup');
+  if (popup) popup.style.display = 'flex';
 }
 
 function applySwap() {
   const { from, to, person } = swapRequest;
   const swappedWith = assignments[to];
-
   swapHistory.push(`"${new Date().toLocaleString()}","${person}","${from}","${to}","${swappedWith}"`);
 
-  fetch("https://docs.google.com/forms/d/e/1FAIpQLSd_UR-lWyEWURdEZ5GOje9j6ePhNSKY6iQNsvcG1yQnFp1BIw/formResponse", {
+  fetch(formURL, {
     method: "POST",
     body: new URLSearchParams({
       "entry.869958100": person,
       "entry.670565463": from,
       "entry.100956069": to,
-      "entry.261956296": swappedWith,
+      "entry.261956296": swappedWith
     }),
     mode: "no-cors",
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-  })
-    .then(() => {
-      const temp = assignments[to];
-      assignments[to] = assignments[from];
-      assignments[from] = temp;
-      renderCalendar(currentMonth, currentYear);
-      document.getElementById("popup").style.display = "none";
-    })
-    .catch((err) => {
-      console.error("Failed to submit form:", err);
-      alert("Something went wrong while saving the swap.");
-    });
+      "Content-Type": "application/x-www-form-urlencoded"
+    }
+  }).catch(err => {
+    console.error("Failed to submit form:", err);
+    alert("Something went wrong while saving the swap.");
+  });
+
+  const temp = assignments[to];
+  assignments[to] = assignments[from];
+  assignments[from] = temp;
+
+  renderCalendar(currentMonth, currentYear);
+  const popup = document.getElementById('popup');
+  if (popup) popup.style.display = 'none';
 }
 
 function closePopup() {
-  document.getElementById("popup").style.display = "none";
+  const popup = document.getElementById('popup');
+  if (popup) popup.style.display = 'none';
 }
 
 function downloadLog() {
@@ -203,15 +185,17 @@ function downloadLog() {
   URL.revokeObjectURL(url);
 }
 
-document.getElementById("prevBtn").addEventListener("click", () => changeMonth(-1));
-document.getElementById("nextBtn").addEventListener("click", () => changeMonth(1));
-document.getElementById("inputSwapBtn").addEventListener("click", confirmSwap);
-document.getElementById("yesBtn").addEventListener("click", applySwap);
-document.getElementById("noBtn").addEventListener("click", closePopup);
-document.getElementById("downloadLogBtn").addEventListener("click", downloadLog);
-
-preloadAssignments(currentYear, currentMonth);
-applySavedSwapsFromSheet(() => {
-  renderCalendar(currentMonth, currentYear);
+document.addEventListener("DOMContentLoaded", () => {
+  preloadAssignments(currentYear, currentMonth);
+  loadSwapsFromSheet(() => {
+    renderCalendar(currentMonth, currentYear);
+  });
   populatePersonSelect();
+
+  document.getElementById("prevBtn")?.addEventListener("click", () => changeMonth(-1));
+  document.getElementById("nextBtn")?.addEventListener("click", () => changeMonth(1));
+  document.getElementById("inputSwapBtn")?.addEventListener("click", confirmSwap);
+  document.getElementById("yesBtn")?.addEventListener("click", applySwap);
+  document.getElementById("noBtn")?.addEventListener("click", closePopup);
+  document.getElementById("downloadLogBtn")?.addEventListener("click", downloadLog);
 });
