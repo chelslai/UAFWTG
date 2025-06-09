@@ -136,21 +136,31 @@ function applySwap() {
   const { from, to, person } = swapRequest;
   const swappedWith = assignments[to];
 
-  swapHistory.push(`"${new Date().toLocaleString()}","${person}","${from}","${to}","${swappedWith}"`);
+  // Submit to Google Form
+  const formData = new FormData();
+  formData.append("entry.869958100", person);       // person
+  formData.append("entry.670565463", from);         // from
+  formData.append("entry.100956069", to);           // to
+  formData.append("entry.261956296", swappedWith);  // swappedWith
 
-  fetch(webhookURL, {
+  fetch("https://docs.google.com/forms/d/e/1FAIpQLSd_UR-lWyEWURdEZ5GOje9j6ePhNSKY6iQNsvcG1yQnFp1BIw/formResponse", {
     method: "POST",
-    body: JSON.stringify({ person, from, to, swappedWith }),
-    headers: { "Content-Type": "application/json" }
-  }).then(res => res.text()).then(response => {
-    console.log("Posted to Google Sheets:", response);
+    mode: "no-cors",
+    body: formData
+  }).then(() => {
+    console.log("Form submitted to Google Form!");
     const temp = assignments[to];
     assignments[to] = assignments[from];
     assignments[from] = temp;
+
     renderCalendar(currentMonth, currentYear);
     document.getElementById('popup').style.display = 'none';
-  }).catch(console.error);
+  }).catch(err => {
+    console.error("Failed to submit form:", err);
+    alert("Something went wrong while saving the swap.");
+  });
 }
+
 
 function closePopup() {
   document.getElementById('popup').style.display = 'none';
