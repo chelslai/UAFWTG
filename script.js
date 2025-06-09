@@ -1,12 +1,11 @@
-// ✅ Final script.js — with Google Sheets sync
-
 const people = ["DC", "2IC", "DSM", "HD DCS"];
 let assignments = {};
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 let swapRequest = {};
 let swapHistory = [];
-const webhookURL = "https://script.google.com/macros/s/AKfycby7FfkRS4yXNP41_HnbvyNzBZzVej2OCorpxrgep-dOTnPhS3dPJc-kl_EOte47r3x3/exec";
+
+const webhookURL = "hhttps://script.google.com/macros/s/AKfycbyOENcSCww3ff1T_CO7quESghZmu_NzyOF1PYCchrBSN57ACNmew4eLJumf1U4zt9fe/exec";
 
 function getLocalDateString(date) {
   return new Date(date).toLocaleDateString('en-CA');
@@ -128,24 +127,20 @@ function applySwap() {
   const { from, to, person } = swapRequest;
   const swappedWith = assignments[to];
 
-  swapHistory.push(`"${new Date().toLocaleString()}","${person}","${from}","${to}","${swappedWith}"`);
+  swapHistory.push(`\"${new Date().toLocaleString()}\",\"${person}\",\"${from}\",\"${to}\",\"${swappedWith}\"`);
 
   fetch(webhookURL, {
     method: "POST",
     body: JSON.stringify({ person, from, to, swappedWith }),
     headers: { "Content-Type": "application/json" }
-  })
-    .then(res => res.text())
-    .then(response => {
-      console.log("POST response:", response);
-      // Swap locally
-      const temp = assignments[to];
-      assignments[to] = assignments[from];
-      assignments[from] = temp;
-      renderCalendar(currentMonth, currentYear);
-      document.getElementById('popup').style.display = 'none';
-    })
-    .catch(console.error);
+  }).then(res => res.text()).then(response => {
+    console.log("Posted to Google Sheets:", response);
+    const temp = assignments[to];
+    assignments[to] = assignments[from];
+    assignments[from] = temp;
+    renderCalendar(currentMonth, currentYear);
+    document.getElementById('popup').style.display = 'none';
+  }).catch(console.error);
 }
 
 function closePopup() {
