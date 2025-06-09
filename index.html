@@ -7,37 +7,37 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<h1>📅 Monthly UAF WTG Comd Calendar</h1>
-<div class="calendar-nav">
-  <button id="prevBtn">◀</button>
-  <span id="monthTitle"></span>
-  <button id="nextBtn">▶</button>
-</div>
-<div class="calendar" id="calendar"></div>
-<div id="swapForm">
-  <h2>REQUEST SWAP</h2>
-  <label>
-    <input type="checkbox" id="acknowledgeBox" />
-    I am unavailable to the date assigned. I have informed the person I am swapping with to the changes made.
-  </label><br><br>
-  <label>You Are?:
-    <select id="personSelect"></select>
-  </label><br>
-  <label>Swap From (dd/mm/yyyy):
-    <input type="date" id="fromDate">
-  </label><br>
-  <label>Swap To (dd/mm/yyyy):
-    <input type="date" id="toDate">
-  </label><br>
-  <button class="button" id="inputSwapBtn">Input Swap</button>
-</div>
-<div id="popup">
-  <div id="popupContent">
-    <p>Are you sure?</p>
-    <button class="button" id="yesBtn">Yes</button>
-    <button class="button" id="noBtn" style="background:#f44336">No</button>
+  <h1>📅 Monthly UAF WTG Comd Calendar</h1>
+  <div class="calendar-nav">
+    <button id="prevBtn">◀</button>
+    <span id="monthTitle"></span>
+    <button id="nextBtn">▶</button>
   </div>
-</div>
-<script src="script.js"></script>
+  <div class="calendar" id="calendar"></div>
+  <div id="swapForm">
+    <h2>REQUEST SWAP</h2>
+    <label>
+      <input type="checkbox" id="acknowledgeBox" />
+      I am unavailable to the date assigned. I have informed the person I am swapping with to the changes made.
+    </label><br><br>
+    <label>You Are:
+      <select id="personSelect"></select>
+    </label><br>
+    <label>Swap From (dd/mm/yyyy):
+      <input type="date" id="fromDate">
+    </label><br>
+    <label>Swap To (dd/mm/yyyy):
+      <input type="date" id="toDate">
+    </label><br>
+    <button class="button" id="inputSwapBtn">Input Swap</button>
+  </div>
+  <div id="popup" style="display:none">
+    <div id="popupContent">
+      <p>Are you sure?</p>
+      <button class="button" id="yesBtn">Yes</button>
+      <button class="button" id="noBtn" style="background:#f44336">No</button>
+    </div>
+  </div>
+  <script src="script.js"></script>
 </body>
 </html>
