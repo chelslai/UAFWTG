@@ -6,7 +6,7 @@ let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 let swapRequest = {};
 let swapHistory = [];
-const webhookURL = "https://script.google.com/macros/s/AKfycby7FfkRS4yXNP41_HnbvyNzBZzVej2OCorpxrgep-dOTnPhS3dPJc-kl_EOte47r3x3/exec";
+const webhookURL = "https://script.google.com/macros/s/AKfycbyOENcSCww3ff1T_CO7quESghZmu_NzyOF1PYCchrBSN57ACNmew4eLJumf1U4zt9fe/exec";
 
 function getLocalDateString(date) {
   return new Date(date).toLocaleDateString('en-CA');
