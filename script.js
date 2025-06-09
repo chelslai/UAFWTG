@@ -1,3 +1,5 @@
+// script.js
+
 document.addEventListener("DOMContentLoaded", function () {
   const people = ["DC", "2IC", "DSM", "HD DCS"];
   let assignments = {};
@@ -33,7 +35,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const monthTitle = document.getElementById("monthTitle");
     if (monthTitle) {
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-      monthTitle.textContent = Month: ${monthNames[month]} ${year};
+      monthTitle.textContent = `Month: ${monthNames[month]} ${year}`;
     }
 
     const firstDay = new Date(year, month, 1).getDay();
@@ -53,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
         dayDiv.classList.add("weekend");
       }
       const dateLabel = document.createElement("h4");
-      dateLabel.textContent = ${thisDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' })};
+      dateLabel.textContent = `${thisDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' })}`;
       dayDiv.appendChild(dateLabel);
       if (assignments[dateStr]) {
         const assigned = document.createElement("div");
@@ -121,7 +123,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const { from, to, person } = swapRequest;
     const swappedWith = assignments[to];
 
-    swapHistory.push("${new Date().toLocaleString()}","${person}","${from}","${to}","${swappedWith}");
+    swapHistory.push(`"${new Date().toLocaleString()}","${person}","${from}","${to}","${swappedWith}"`);
 
     fetch(webhookURL, {
       method: "POST",
