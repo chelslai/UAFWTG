@@ -7,6 +7,18 @@ document.addEventListener("DOMContentLoaded", function () {
   let swapRequest = {};
   let swapHistory = [];
 
+function saveSwapsToLocal() {
+  localStorage.setItem("swaps", JSON.stringify(assignments));
+}
+
+function loadSwapsFromLocal() {
+  const saved = localStorage.getItem("swaps");
+  if (saved) {
+    assignments = JSON.parse(saved);
+  }
+}
+
+
   function getLocalDateString(date) {
     return new Date(date).toLocaleDateString('en-CA');
   }
@@ -23,6 +35,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function preloadAssignments(year, month) {
+  loadSwapsFromLocal();
     const date = new Date(year, month, 1);
     let personIndex = 0;
     while (date.getMonth() === month) {
@@ -132,6 +145,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const temp = assignments[to];
     assignments[to] = assignments[from];
     assignments[from] = temp;
+    saveSwapsToLocal();
 
     saveAssignments();  // Save updated swaps
 
