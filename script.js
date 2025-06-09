@@ -1,3 +1,5 @@
+// Monthly UAF WTG Comd Calendar - script.js
+
 const people = ["DC", "2IC", "DSM", "HD DCS"];
 let assignments = {};
 let currentMonth = new Date().getMonth();
@@ -5,10 +7,11 @@ let currentYear = new Date().getFullYear();
 let swapRequest = {};
 let swapHistory = [];
 
-const formURL = "https://docs.google.com/forms/d/e/1FAIpQLSd_UR-lWyEWURdEZ5GOje9j6ePhNSKY6iQNsvcG1yQnFp1BIw/formResponse";
+const swapFormURL = "https://docs.google.com/forms/d/e/1FAIpQLSd_UR-lWyEWURdEZ5GOje9j6ePhNSKY6iQNsvcG1yQnFp1BIw/formResponse";
+const sheetDataURL = "https://opensheet.elk.sh/1AYzYv4YGCulxHE8aKHZYqKchpLQ0rLdd9nS_VZlP7_w/Sheet1";
 
 function getLocalDateString(date) {
-  return new Date(date).toLocaleDateString('en-CA');
+  return new Date(date).toISOString().split('T')[0];
 }
 
 function preloadAssignments(year, month) {
@@ -30,11 +33,10 @@ function renderCalendar(month, year) {
   const calendar = document.getElementById("calendar");
   if (!calendar) return;
   calendar.innerHTML = "";
+
   const monthTitle = document.getElementById("monthTitle");
-  if (monthTitle) {
-    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    monthTitle.textContent = `Month: ${monthNames[month]} ${year}`;
-  }
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  monthTitle.textContent = `Month: ${monthNames[month]} ${year}`;
 
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -45,43 +47,27 @@ function renderCalendar(month, year) {
   }
 
   for (let date = 1; date <= daysInMonth; date++) {
-    const dayDiv = document.createElement("div");
     const thisDate = new Date(year, month, date);
     const dateStr = getLocalDateString(thisDate);
+    const dayDiv = document.createElement("div");
     dayDiv.classList.add("day");
     if (thisDate.getDay() === 0 || thisDate.getDay() === 6) {
       dayDiv.classList.add("weekend");
     }
+
     const dateLabel = document.createElement("h4");
-    dateLabel.textContent = `${thisDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' })}`;
+    dateLabel.textContent = thisDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' });
     dayDiv.appendChild(dateLabel);
+
     if (assignments[dateStr]) {
       const assigned = document.createElement("div");
       assigned.classList.add("assigned");
       assigned.textContent = assignments[dateStr];
       dayDiv.appendChild(assigned);
     }
+
     calendar.appendChild(dayDiv);
   }
-}
-
-function loadSwapsFromSheet(callback) {
-  fetch("https://opensheet.elk.sh/1AYzYv4YGCulxHE8aKHZYqKchpLQ0rLdd9nS_VZlP7_w/Sheet1")
-    .then(res => res.json())
-    .then(data => {
-      data.forEach(row => {
-        if (row.person && row.from_date && row.to_date) {
-          const temp = assignments[row.to_date];
-          assignments[row.to_date] = assignments[row.from_date];
-          assignments[row.from_date] = temp;
-        }
-      });
-      if (callback) callback();
-    })
-    .catch(err => {
-      console.error("Failed to load swaps from sheet:", err);
-      if (callback) callback();
-    });
 }
 
 function changeMonth(offset) {
@@ -97,7 +83,6 @@ function changeMonth(offset) {
   loadSwapsFromSheet(() => {
     renderCalendar(currentMonth, currentYear);
   });
-  populatePersonSelect();
 }
 
 function populatePersonSelect() {
@@ -118,60 +103,71 @@ function confirmSwap() {
   const acknowledged = document.getElementById('acknowledgeBox')?.checked;
   const person = document.getElementById('personSelect')?.value;
 
-  const fromStr = getLocalDateString(fromDate);
-  const toStr = getLocalDateString(toDate);
+  if (!acknowledged || !fromDate || !toDate || !person) {
+    alert('Please fill in all fields and acknowledge the swap.');
+    return;
+  }
 
-  if (!acknowledged) {
-    alert('Please confirm you have informed the person you are swapping with.');
-    return;
-  }
-  if (!fromStr || !toStr) {
-    alert('Please select both dates.');
-    return;
-  }
+  const fromStr = getLocalDateString(fromDate);
   if (assignments[fromStr] !== person) {
-    alert('You are not assigned to the from-date.');
+    alert(`You are not assigned on ${fromStr}. Assigned person is ${assignments[fromStr] || 'none'}`);
     return;
   }
-  swapRequest = { from: fromStr, to: toStr, person };
-  const popup = document.getElementById('popup');
-  if (popup) popup.style.display = 'flex';
+
+  swapRequest = {
+    from: fromStr,
+    to: getLocalDateString(toDate),
+    person,
+    swappedWith: assignments[getLocalDateString(toDate)]
+  };
+  document.getElementById('popup').style.display = 'flex';
 }
 
 function applySwap() {
-  const { from, to, person } = swapRequest;
-  const swappedWith = assignments[to];
-  swapHistory.push(`"${new Date().toLocaleString()}","${person}","${from}","${to}","${swappedWith}"`);
+  const { from, to, person, swappedWith } = swapRequest;
 
-  fetch(formURL, {
+  assignments[to] = person;
+  assignments[from] = swappedWith;
+
+  const formData = new URLSearchParams();
+  formData.append("entry.869958100", person);
+  formData.append("entry.670565463", from);
+  formData.append("entry.100956069", to);
+  formData.append("entry.261956296", swappedWith);
+
+  fetch(swapFormURL, {
     method: "POST",
-    body: new URLSearchParams({
-      "entry.869958100": person,
-      "entry.670565463": from,
-      "entry.100956069": to,
-      "entry.261956296": swappedWith
-    }),
+    body: formData,
     mode: "no-cors",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded"
     }
-  }).catch(err => {
-    console.error("Failed to submit form:", err);
-    alert("Something went wrong while saving the swap.");
   });
 
-  const temp = assignments[to];
-  assignments[to] = assignments[from];
-  assignments[from] = temp;
-
   renderCalendar(currentMonth, currentYear);
-  const popup = document.getElementById('popup');
-  if (popup) popup.style.display = 'none';
+  document.getElementById('popup').style.display = 'none';
 }
 
 function closePopup() {
-  const popup = document.getElementById('popup');
-  if (popup) popup.style.display = 'none';
+  document.getElementById('popup').style.display = 'none';
+}
+
+function loadSwapsFromSheet(callback) {
+  fetch(sheetDataURL)
+    .then(res => res.json())
+    .then(rows => {
+      rows.forEach(row => {
+        if (row.from && row.to && row.person && row.swappedWith) {
+          assignments[row.to] = row.person;
+          assignments[row.from] = row.swappedWith;
+        }
+      });
+      callback();
+    })
+    .catch(err => {
+      console.error("Failed to load swap data:", err);
+      callback();
+    });
 }
 
 function downloadLog() {
