@@ -1,4 +1,3 @@
-
 document.addEventListener("DOMContentLoaded", function () {
   const people = ["DC", "2IC", "DSM", "HD DCS"];
   let assignments = {};
@@ -11,20 +10,10 @@ document.addEventListener("DOMContentLoaded", function () {
     return new Date(date).toLocaleDateString('en-CA');
   }
 
-  function saveAssignments() {
-    localStorage.setItem("assignments", JSON.stringify(assignments));
-  }
-
-  function loadAssignments() {
-    const stored = localStorage.getItem("assignments");
-    if (stored) {
-      assignments = JSON.parse(stored);
-    }
-  }
-
   function preloadAssignments(year, month) {
     const date = new Date(year, month, 1);
     let personIndex = 0;
+    assignments = {};
     while (date.getMonth() === month) {
       const day = date.getDay();
       const dateStr = getLocalDateString(date);
@@ -40,8 +29,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const calendar = document.getElementById("calendar");
     calendar.innerHTML = "";
     const monthTitle = document.getElementById("monthTitle");
-    const monthNames = ["January", "February", "March", "April", "May", "June",
-                        "July", "August", "September", "October", "November", "December"];
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     monthTitle.textContent = `Month: ${monthNames[month]} ${year}`;
 
     const firstDay = new Date(year, month, 1).getDay();
@@ -99,13 +87,13 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function confirmSwap() {
-    const fromDate = document.getElementById('fromDate')?.value;
-    const toDate = document.getElementById('toDate')?.value;
-    const acknowledged = document.getElementById('acknowledgeBox')?.checked;
-    const person = document.getElementById('personSelect')?.value;
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+    const acknowledged = document.getElementById('acknowledgeBox').checked;
+    const person = document.getElementById('personSelect').value;
 
-    const fromStr = fromDate;
-    const toStr = toDate;
+    const fromStr = getLocalDateString(fromDate);
+    const toStr = getLocalDateString(toDate);
 
     if (!acknowledged) {
       alert('Please confirm you have informed the person you are swapping with.');
@@ -129,14 +117,30 @@ document.addEventListener("DOMContentLoaded", function () {
 
     swapHistory.push(`"${new Date().toLocaleString()}","${person}","${from}","${to}","${swappedWith}"`);
 
-    const temp = assignments[to];
-    assignments[to] = assignments[from];
-    assignments[from] = temp;
+    const formData = new URLSearchParams();
+    formData.append("entry.869958100", person);
+    formData.append("entry.670565463", from);
+    formData.append("entry.100956069", to);
+    formData.append("entry.261956296", swappedWith);
 
-    saveAssignments();  // Save updated swaps
-
-    renderCalendar(currentMonth, currentYear);
-    document.getElementById('popup').style.display = 'none';
+    fetch("https://docs.google.com/forms/d/e/1FAIpQLSd_UR-lWyEWURdEZ5GOje9j6ePhNSKY6iQNsvcG1yQnFp1BIw/formResponse", {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: formData
+    }).then(() => {
+      const temp = assignments[to];
+      assignments[to] = assignments[from];
+      assignments[from] = temp;
+      localStorage.setItem("assignments", JSON.stringify(assignments));
+      renderCalendar(currentMonth, currentYear);
+      document.getElementById('popup').style.display = 'none';
+    }).catch(err => {
+      console.error("❌ Failed to submit form:", err);
+      alert("Something went wrong while saving the swap.");
+    });
   }
 
   function closePopup() {
@@ -154,15 +158,19 @@ document.addEventListener("DOMContentLoaded", function () {
     URL.revokeObjectURL(url);
   }
 
-  document.getElementById("prevBtn").addEventListener("click", () => changeMonth(-1));
-  document.getElementById("nextBtn").addEventListener("click", () => changeMonth(1));
-  document.getElementById("inputSwapBtn").addEventListener("click", confirmSwap);
-  document.getElementById("yesBtn").addEventListener("click", applySwap);
-  document.getElementById("noBtn").addEventListener("click", closePopup);
-  document.getElementById("downloadLogBtn").addEventListener("click", downloadLog);
+  document.getElementById("prevBtn")?.addEventListener("click", () => changeMonth(-1));
+  document.getElementById("nextBtn")?.addEventListener("click", () => changeMonth(1));
+  document.getElementById("inputSwapBtn")?.addEventListener("click", confirmSwap);
+  document.getElementById("yesBtn")?.addEventListener("click", applySwap);
+  document.getElementById("noBtn")?.addEventListener("click", closePopup);
+  document.getElementById("downloadLogBtn")?.addEventListener("click", downloadLog);
 
-  loadAssignments();
-  preloadAssignments(currentYear, currentMonth);
+  const stored = localStorage.getItem("assignments");
+  if (stored) {
+    assignments = JSON.parse(stored);
+  } else {
+    preloadAssignments(currentYear, currentMonth);
+  }
   renderCalendar(currentMonth, currentYear);
   populatePersonSelect();
 });
